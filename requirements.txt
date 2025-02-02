@@ -1,0 +1,8 @@
+streamlit
+openai
+Pillow
+python-dotenv
+torch
+transformers
+clip-by-openai
+
