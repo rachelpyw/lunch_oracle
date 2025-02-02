@@ -49,36 +49,31 @@ def get_object_label(image_file):
     except Exception as e:
         return f"Error using CLIP model: {e}"
 
-# Function to generate lunch prophecy
+# Function to generate a full prophecy while extracting a keyword for Yelp
 def get_lunch_prophecy(object_label, user_responses):
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a short, keyword-based suggestion."}
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a two-sentence, poetic, mystical prophecy, followed by a short keyword indicating the kind of food (e.g., 'salad', 'ramen', 'pasta')."}
             ]
         )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error generating lunch prophecy: {e}"
+        oracle_response = response.choices[0].message.content
 
-# Function to extract food keywords from the prophecy
-def extract_food_keywords(prophecy):
-    common_foods = [
-        "salad", "soup", "sandwich", "pizza", "ramen", "sushi", "pasta", "burger", "tacos", "burrito",
-        "noodles", "rice", "wrap", "curry", "steak", "pancakes", "smoothie", "poke", "bagel", "falafel"
-    ]
-    words = prophecy.lower().split()
-    keywords = [word for word in words if word in common_foods]
-    return keywords[0] if keywords else "lunch"
+        # Extract keyword (last word in response)
+        keyword_match = re.search(r"\b(salad|soup|sandwich|pizza|ramen|sushi|pasta|burger|tacos|burrito|noodles|rice|wrap|curry|steak|pancakes|smoothie|poke|bagel|falafel)\b", oracle_response.lower())
+        keyword = keyword_match.group(0) if keyword_match else "lunch"
+
+        return oracle_response, keyword
+    except Exception as e:
+        return f"Error generating lunch prophecy: {e}", "lunch"
 
 # Function to find personalized lunch spots using Yelp API
-def find_personalized_lunch_spots(lunch_suggestion):
+def find_personalized_lunch_spots(food_keyword):
     headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
-    search_term = extract_food_keywords(lunch_suggestion)  # Extract a food-related keyword
     params = {
-        "term": search_term,
+        "term": food_keyword,
         "location": "MIT Media Lab, Cambridge, MA",
         "limit": 3,
         "price": "1,2"
@@ -120,14 +115,15 @@ if uploaded_file:
 
     if answer1 and answer2:
         st.write("🔮 Consulting the ancient energies...")
-        lunch_prophecy = get_lunch_prophecy(object_label, [answer1, answer2])
+        lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, [answer1, answer2])
 
         # Display mystical lunch prophecy
         st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
 
         # Display personalized lunch spot recommendations
         st.subheader("🍽️ Nearby Offerings")
-        personalized_lunch_spots = find_personalized_lunch_spots(lunch_prophecy)
+        personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
+
 
