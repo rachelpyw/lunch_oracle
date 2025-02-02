@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 
 # Load API keys securely from .env file
 load_dotenv()
-OPENAI_API_KEY = st.secrets("OPENAI_API_KEY")
-YELP_API_KEY = st.secrets("YELP_API_KEY")
-GOOGLE_API_KEY = st.secrets("GOOGLE_API_KEY")
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+YELP_API_KEY = st.secrets["YELP_API_KEY"]
+GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
 # Initialize OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -100,7 +100,7 @@ if uploaded_file:
         st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
 
         # Display affordable lunch spot recommendations
-        st.subheader("🍽️ Neary oOfferings")
+        st.subheader("🍽️ Nearby offerings")
         affordable_lunch_spots = find_affordable_lunch_spots()
         for spot in affordable_lunch_spots:
             st.write(f"🍴 {spot}")
