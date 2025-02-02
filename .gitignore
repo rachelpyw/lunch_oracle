@@ -2,3 +2,4 @@ lunch_oracle_env/
 *.dylib
 *.so
 *.json
+.env
