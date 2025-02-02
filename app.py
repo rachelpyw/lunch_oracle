@@ -56,7 +56,7 @@ def get_lunch_prophecy(object_label, user_responses):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a two-sentence, poetic, mystical prophecy, followed by a short keyword indicating the kind of food (e.g., 'salad', 'ramen', 'pasta')."}
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a two-sentence, poetic, mystical prophecy, followed by a short keyword indicating the kind of food (e.g., 'salad', 'ramen', 'pasta'), but do not include the keyword in the response."}
             ]
         )
         oracle_response = response.choices[0].message.content
@@ -120,10 +120,9 @@ if uploaded_file:
         # Display mystical lunch prophecy
         st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
 
-        # Display personalized lunch spot recommendations
+        # Display personalized lunch spot recommendations (WITHOUT showing the keyword)
         st.subheader("🍽️ Nearby Offerings")
         personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
-
 
