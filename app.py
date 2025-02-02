@@ -6,12 +6,11 @@ import torch
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 from dotenv import load_dotenv
-from functools import lru_cache
+import re
 
 # Load API keys securely from Streamlit Secrets
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 YELP_API_KEY = st.secrets["YELP_API_KEY"]
-GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
 # Initialize OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -23,19 +22,19 @@ def load_clip_model():
 
 clip_model, clip_processor = load_clip_model()
 
-# List of 75 research-related items (optimized for MIT Media Lab users)
+# List of 75 research-related items
 ITEMS = [
     "AirPods", "Backpack", "Badge", "Ballpoint pen", "Battery pack", "Belt", "Binder clip", "Bluetooth speaker",
     "Book", "Calculator", "Camera", "Coffee cup", "Cord", "Cutting mat", "Desk lamp", "Digital tablet", "Drone",
-    "Earbuds", "Ergonomic chair", "Ethernet cable", "External hard drive", "Fabric sample", "Face mask", "Flash drive",
-    "Flashlight", "Glasses", "Graphic tablet", "Green screen", "Guitar pick", "Hand sanitizer", "Headphones",
-    "Heat gun", "Hoodie", "ID badge", "Ink pen", "Jacket", "Journal", "Keyboard", "Laptop", "Laser pointer",
-    "Leather wallet", "LED strip", "Lens cap", "Lipstick", "Magnifying glass", "Marker", "Mechanical keyboard",
-    "Mechanical pencil", "Microphone", "Microprocessor", "Mug", "Multimeter", "Notebook", "Paperclip", "Patch cable",
-    "Phone charger", "Phone stand", "Portable projector", "Power bank", "Power strip", "Prototyping board",
-    "Recorder", "Raspberry Pi", "Resistor pack", "Ring light", "Rubber band", "Safety goggles", "Scientific calculator",
-    "Screwdriver", "SD card", "Shoes", "Smartwatch", "Soldering iron", "Soundproofing foam", "Sticker", "Stylus pen",
-    "Tape measure", "Tote bag", "Tripod", "USB cable", "Whiteboard marker", "Wireless mouse"
+    "Earbuds", "Ergonomic chair", "Ethernet cable", "External hard drive", "Face mask", "Flash drive", "Flashlight",
+    "Glasses", "Graphic tablet", "Green screen", "Hand sanitizer", "Headphones", "Heat gun", "Hoodie", "ID badge",
+    "Ink pen", "Jacket", "Journal", "Keyboard", "Laptop", "Laser pointer", "Leather wallet", "LED strip", "Lens cap",
+    "Lipstick", "Magnifying glass", "Marker", "Mechanical keyboard", "Mechanical pencil", "Microphone",
+    "Multimeter", "Notebook", "Paperclip", "Patch cable", "Phone charger", "Portable projector", "Power bank",
+    "Power strip", "Prototyping board", "Recorder", "Raspberry Pi", "Resistor pack", "Ring light", "Rubber band",
+    "Safety goggles", "Scientific calculator", "Screwdriver", "SD card", "Shoes", "Smartwatch", "Soldering iron",
+    "Soundproofing foam", "Sticker", "Stylus pen", "Tape measure", "Tote bag", "Tripod", "USB cable",
+    "Whiteboard marker", "Wireless mouse"
 ]
 
 # Function to recognize object using CLIP
@@ -57,21 +56,32 @@ def get_lunch_prophecy(object_label, user_responses):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a mystical yet practical suggestion."}
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a short, keyword-based suggestion."}
             ]
         )
         return response.choices[0].message.content
     except Exception as e:
         return f"Error generating lunch prophecy: {e}"
 
+# Function to extract food keywords from the prophecy
+def extract_food_keywords(prophecy):
+    common_foods = [
+        "salad", "soup", "sandwich", "pizza", "ramen", "sushi", "pasta", "burger", "tacos", "burrito",
+        "noodles", "rice", "wrap", "curry", "steak", "pancakes", "smoothie", "poke", "bagel", "falafel"
+    ]
+    words = prophecy.lower().split()
+    keywords = [word for word in words if word in common_foods]
+    return keywords[0] if keywords else "lunch"
+
 # Function to find personalized lunch spots using Yelp API
 def find_personalized_lunch_spots(lunch_suggestion):
     headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
+    search_term = extract_food_keywords(lunch_suggestion)  # Extract a food-related keyword
     params = {
-        "term": lunch_suggestion,
+        "term": search_term,
         "location": "MIT Media Lab, Cambridge, MA",
         "limit": 3,
-        "price": "1,2"  # Affordable options only
+        "price": "1,2"
     }
     try:
         response = requests.get("https://api.yelp.com/v3/businesses/search", headers=headers, params=params)
