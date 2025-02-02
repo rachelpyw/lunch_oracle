@@ -7,11 +7,9 @@ from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 from dotenv import load_dotenv
 
-# Load API keys securely from .env file
-load_dotenv()
+# Load API keys securely from Streamlit secrets
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 YELP_API_KEY = st.secrets["YELP_API_KEY"]
-GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
 # Initialize OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -38,28 +36,34 @@ def get_object_label(image_file):
     except Exception as e:
         return f"Error using CLIP model: {e}"
 
-# Function to generate lunch prophecy
+# Function to generate lunch prophecy with a food suggestion
 def get_lunch_prophecy(object_label, user_responses):
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a mystical yet practical suggestion under $20, reflecting values such as trust, comfort, and frugality."}
+                {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions. Format your response as:\n1. Oracle's message\n2. Suggested food (one word, lowercase, like 'salad' or 'ramen')."},
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a mystical yet practical suggestion that feels aligned with trust, comfort, and indulgence."}
             ]
         )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error generating lunch prophecy: {e}"
+        oracle_message = response.choices[0].message.content
 
-# Function to find affordable lunch spots using Yelp API
-def find_affordable_lunch_spots():
+        # Extract food suggestion from the response (assuming format: "1. Message\n2. Food")
+        lines = oracle_message.split("\n")
+        food_suggestion = lines[-1] if len(lines) > 1 else "lunch"  # Default to "lunch" if parsing fails
+
+        return oracle_message, food_suggestion
+    except Exception as e:
+        return f"Error generating lunch prophecy: {e}", "lunch"
+
+# Function to find lunch spots that match the suggested food type
+def find_relevant_lunch_spots(food_suggestion):
     headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
     params = {
-        "term": "lunch",
+        "term": food_suggestion,  # Use Oracle's suggestion
         "location": "MIT Media Lab, Cambridge, MA",
-        "limit": 5,
-        "price": "1,2"  # 1: Cheapest, 2: Affordable
+        "limit": 3,  # Get only 3 best results
+        "price": "1,2"  # 1 = Cheap, 2 = Affordable
     }
     try:
         response = requests.get("https://api.yelp.com/v3/businesses/search", headers=headers, params=params)
@@ -67,7 +71,7 @@ def find_affordable_lunch_spots():
         if businesses:
             return [f"{biz['name']} - {biz['location']['address1']} (Price: {biz.get('price', 'N/A')})" for biz in businesses]
         else:
-            return ["No affordable lunch spots found nearby. The Oracle is uncertain..."]
+            return ["🔮 The Oracle sees no fitting places... perhaps another fate awaits."]
     except Exception as e:
         return [f"Error fetching lunch spots: {e}"]
 
@@ -94,14 +98,15 @@ if uploaded_file:
 
     if answer1 and answer2:
         st.write("🔮 Consulting the ancient energies...")
-        lunch_prophecy = get_lunch_prophecy(object_label, [answer1, answer2])
+        
+        # Generate prophecy and extract food suggestion
+        lunch_prophecy, food_suggestion = get_lunch_prophecy(object_label, [answer1, answer2])
 
         # Display mystical lunch prophecy
         st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
 
-        # Display affordable lunch spot recommendations
-        st.subheader("🍽️ Nearby offerings")
-        affordable_lunch_spots = find_affordable_lunch_spots()
-        for spot in affordable_lunch_spots:
+        # Display lunch spot recommendations based on prophecy
+        st.subheader(f"🍽️ Nearby offerings for {food_suggestion}")
+        relevant_lunch_spots = find_relevant_lunch_spots(food_suggestion)
+        for spot in relevant_lunch_spots:
             st.write(f"🍴 {spot}")
-
