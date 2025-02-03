@@ -22,19 +22,22 @@ def load_clip_model():
 
 clip_model, clip_processor = load_clip_model()
 
-# List of 75 research-related items
+# List of 100 everyday items (balanced for MIT Media Lab + general household)
 ITEMS = [
     "AirPods", "Backpack", "Badge", "Ballpoint pen", "Battery pack", "Belt", "Binder clip", "Bluetooth speaker",
-    "Book", "Calculator", "Camera", "Coffee cup", "Cord", "Cutting mat", "Desk lamp", "Digital tablet", "Drone",
-    "Earbuds", "Ergonomic chair", "Ethernet cable", "External hard drive", "Face mask", "Flash drive", "Flashlight",
-    "Glasses", "Graphic tablet", "Green screen", "Hand sanitizer", "Headphones", "Heat gun", "Hoodie", "ID badge",
-    "Ink pen", "Jacket", "Journal", "Keyboard", "Laptop", "Laser pointer", "Leather wallet", "LED strip", "Lens cap",
-    "Lipstick", "Magnifying glass", "Marker", "Mechanical keyboard", "Mechanical pencil", "Microphone",
-    "Multimeter", "Notebook", "Paperclip", "Patch cable", "Phone charger", "Portable projector", "Power bank",
-    "Power strip", "Prototyping board", "Recorder", "Raspberry Pi", "Resistor pack", "Ring light", "Rubber band",
-    "Safety goggles", "Scientific calculator", "Screwdriver", "SD card", "Shoes", "Smartwatch", "Soldering iron",
-    "Soundproofing foam", "Sticker", "Stylus pen", "Tape measure", "Tote bag", "Tripod", "USB cable",
-    "Whiteboard marker", "Wireless mouse"
+    "Book", "Calculator", "Camera", "Coffee cup", "Cord", "Desk lamp", "Digital tablet", "Drone", "Earbuds",
+    "Ethernet cable", "External hard drive", "Face mask", "Flash drive", "Flashlight", "Glasses", "Hand sanitizer",
+    "Headphones", "Hoodie", "Ink pen", "Jacket", "Journal", "Keyboard", "Laptop", "Laser pointer", "Leather wallet",
+    "Lipstick", "Magnifying glass", "Marker", "Mechanical pencil", "Microphone", "Multimeter", "Notebook",
+    "Paperclip", "Patch cable", "Phone charger", "Portable projector", "Power bank", "Power strip", "Recorder",
+    "Raspberry Pi", "Ring light", "Rubber band", "Safety goggles", "Scientific calculator", "Screwdriver", "SD card",
+    "Shoes", "Smartwatch", "Soldering iron", "Soundproofing foam", "Sticker", "Stylus pen", "Tape measure",
+    "Tote bag", "Tripod", "USB cable", "Whiteboard marker", "Wireless mouse", "Sunscreen", "Water bottle", "Plushie",
+    "Pencil", "Plant", "Eraser", "Scissors", "Notebook stand", "Desk chair", "Coffee beans", "Yoga mat",
+    "Smart lightbulb", "Bike helmet", "Portable fan", "Guitar pick", "Measuring spoon", "TV remote", "Scented candle",
+    "Desk organizer", "Stress ball", "Wireless keyboard", "Phone stand", "Resistance bands", "Fidget spinner",
+    "Keychain", "Reusable straw", "Travel mug", "Paper towel roll", "Sticky notes", "Charger cable", "Umbrella",
+    "Shopping tote", "Shoe cleaner", "Lint roller", "Coaster", "Clip-on ring light"
 ]
 
 # Function to recognize object using CLIP
@@ -56,7 +59,7 @@ def get_lunch_prophecy(object_label, user_responses):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Provide a two-sentence, poetic, mystical prophecy, followed by a short keyword indicating the kind of food (e.g., 'salad', 'ramen', 'pasta'), but do not include the keyword in the response."}
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Highlight what I 'trust' in, find 'comfort' in, and 'value'. Then, provide a two-sentence, poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
             ]
         )
         oracle_response = response.choices[0].message.content
@@ -90,10 +93,10 @@ def find_personalized_lunch_spots(food_keyword):
 
 # Streamlit UI
 st.title("🔮 The Lunch Oracle")
-st.subheader("Reveal your lunch destiny by presenting a sacred offering...")
+st.subheader("Reveal your lunch destiny by presenting an offering - a photo of an everyday item you use and love.")
 
 # Upload image
-uploaded_file = st.file_uploader("📸 Present your offering (an object you use daily):", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("📸 Upload a photo or take one with your camera.", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     st.image(uploaded_file, caption="Your sacred offering...", use_container_width=True)
 
@@ -108,7 +111,7 @@ if uploaded_file:
 
     prompts = [
         f"Tell me, why is this {object_label} important to you?",
-        "And what do you cherish most about it?"
+        "In this object, the Oracle senses a reflection of your spirit. How does it guide you?"
     ]
     answer1 = st.text_input(prompts[0])
     answer2 = st.text_input(prompts[1])
@@ -121,8 +124,7 @@ if uploaded_file:
         st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
 
         # Display personalized lunch spot recommendations (WITHOUT showing the keyword)
-        st.subheader("🍽️ Nearby Offerings")
+        st.subheader("🍽️ The Oracle has foreseen these offerings, aligned with your deepest values:")
         personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
-
