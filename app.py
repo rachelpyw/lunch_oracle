@@ -53,19 +53,19 @@ def get_object_label(image_file):
         return f"Error using CLIP model: {e}"
 
 # Function to generate a full prophecy while extracting a keyword for Yelp
-def get_lunch_prophecy(object_label, user_responses):
+def get_lunch_prophecy(object_label, user_response):
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_responses[0]} and {user_responses[1]}. What should I eat for lunch? Highlight what I 'trust' in, find 'comfort' in, and 'value'. Then, provide a two-sentence, poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
+                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_response}. What should I eat for lunch? Highlight what I 'trust' in, find 'comfort' in, and 'value'. Then, provide a two-sentence, poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
             ]
         )
         oracle_response = response.choices[0].message.content
 
         # Extract keyword (last word in response)
-        keyword_match = re.search(r"\b(salad|soup|sandwich|pizza|ramen|sushi|pasta|burger|tacos|burrito|noodles|rice|wrap|curry|steak|pancakes|smoothie|poke|bagel|falafel)\b", oracle_response.lower())
+        keyword_match = re.search(r"\b(salad|soup|sandwich|pizza|ramen|sushi|pasta|burger|tacos|burrito|noodles|rice|wrap|curry|steak|pancakes|smoothie|poke|bagel|falafel|dumplings|noodle|bbq|pho|dim sum|hotpot|teriyaki|laksa|bánh mì|pad thai|roti|shawarma)\b", oracle_response.lower())
         keyword = keyword_match.group(0) if keyword_match else "lunch"
 
         return oracle_response, keyword
@@ -76,7 +76,7 @@ def get_lunch_prophecy(object_label, user_responses):
 def find_personalized_lunch_spots(food_keyword):
     headers = {"Authorization": f"Bearer {YELP_API_KEY}"}
     params = {
-        "term": food_keyword,
+        "term": f"{food_keyword} restaurant",
         "location": "MIT Media Lab, Cambridge, MA",
         "limit": 3,
         "price": "1,2"
@@ -85,7 +85,7 @@ def find_personalized_lunch_spots(food_keyword):
         response = requests.get("https://api.yelp.com/v3/businesses/search", headers=headers, params=params)
         businesses = response.json().get("businesses", [])
         if businesses:
-            return [f"{biz['name']} - {biz['location']['address1']} (Price: {biz.get('price', 'N/A')})" for biz in businesses]
+            return [f"{biz['name']} - {biz['location']['address1']} ({biz.get('categories', [{'title': 'Unknown'}])[0]['title']})" for biz in businesses]
         else:
             return ["No matching lunch spots found nearby."]
     except Exception as e:
@@ -104,19 +104,22 @@ if uploaded_file:
     object_label = get_object_label(uploaded_file)
     st.write(f"🌀 The Oracle perceives... **{object_label}**")
 
-    # Ask user mystical questions
-    is_correct = st.radio(f"Is this a **{object_label}**?", ["Yes", "No"])
-    if is_correct == "No":
-        object_label = st.text_input("What is this object instead?")
+    # Ask user mystical question
+    user_response = st.text_input(f"How does your **{object_label}** guide you in life?")
 
-    prompts = [
-        f"Tell me, why is this {object_label} important to you?",
-        "In this object, the Oracle senses a reflection of your spirit. How does it guide you?"
-    ]
-    answer1 = st.text_input(prompts[0])
-    answer2 = st.text_input(prompts[1])
+    if user_response:
+        with st.spinner("🔮 Consulting the ancient energies..."):
+            lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, user_response)
 
-    if answer1 and answer2:
+        # Display mystical lunch prophecy
+        st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
+
+        # Display personalized lunch spot recommendations
+        st.subheader("🍽️ The Oracle has foreseen these offerings, aligned with your deepest values:")
+        personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
+        for spot in personalized_lunch_spots:
+            st.write(f"🍴 {spot}")
+nswer1 and answer2:
         st.write("🔮 Consulting the ancient energies...")
         lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, [answer1, answer2])
 
