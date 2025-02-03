@@ -119,15 +119,3 @@ if uploaded_file:
         personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
-nswer1 and answer2:
-        st.write("🔮 Consulting the ancient energies...")
-        lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, [answer1, answer2])
-
-        # Display mystical lunch prophecy
-        st.success(f"🌟 Your lunch destiny: {lunch_prophecy}")
-
-        # Display personalized lunch spot recommendations (WITHOUT showing the keyword)
-        st.subheader("🍽️ The Oracle has foreseen these offerings, aligned with your deepest values:")
-        personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
-        for spot in personalized_lunch_spots:
-            st.write(f"🍴 {spot}")
