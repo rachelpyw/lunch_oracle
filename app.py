@@ -3,6 +3,7 @@ from openai import OpenAI
 import os
 import requests
 import torch
+import time  # Import time to control loading duration
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
 from dotenv import load_dotenv
@@ -59,7 +60,7 @@ def get_lunch_prophecy(object_label, user_response):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
-                {"role": "user", "content": f"I presented an object: {object_label}. Here's what it means to me: {user_response}. What should I eat for lunch? Highlight what I 'trust' in, find 'comfort' in, and 'value'. Then, provide a two-sentence, poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
+                {"role": "user", "content": f"I presented an object: {object_label}. The seeker tells me: {user_response}. What should they eat for lunch? Highlight what they 'trust' in, find 'comfort' in, and 'value'. Then, provide a poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
             ]
         )
         oracle_response = response.choices[0].message.content
@@ -104,11 +105,23 @@ if uploaded_file:
     object_label = get_object_label(uploaded_file)
     st.write(f"🌀 The Oracle perceives... **{object_label}**")
 
-    # Ask user mystical question
-    user_response = st.text_input(f"How does your **{object_label}** guide you in life?")
+    # Ask user if the label is correct
+    is_correct = st.radio(f"Is this a **{object_label}**?", ["Yes", "No"])
+    if is_correct == "No":
+        object_label = st.text_input("What is this object instead?")
+
+    # Ask a quirky, mystical question
+    quirky_questions = [
+        f"How does your **{object_label}** guide you in times of uncertainty?",
+        f"What secret wisdom does your **{object_label}** whisper to you in moments of reflection?",
+        f"If your **{object_label}** had a spirit, what would it say about your journey?",
+        f"How does your **{object_label}** shape your fate?"
+    ]
+    user_response = st.text_input(quirky_questions[0])
 
     if user_response:
-        with st.spinner("🔮 Consulting the ancient energies..."):
+        with st.spinner("🌿 The Oracle is meditating on your essence... infusing wisdom and care into its vision... 🔮"):
+            time.sleep(5)  # Simulating a longer, mystical wait time
             lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, user_response)
 
         # Display mystical lunch prophecy
@@ -119,3 +132,4 @@ if uploaded_file:
         personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
+
