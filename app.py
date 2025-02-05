@@ -23,7 +23,7 @@ def load_clip_model():
 
 clip_model, clip_processor = load_clip_model()
 
-# List of 100 everyday items (balanced for MIT Media Lab + general household)
+# List of 125 everyday items, balanced for MIT Media Lab + general life (added pets & household items)
 ITEMS = [
     "AirPods", "Backpack", "Badge", "Ballpoint pen", "Battery pack", "Belt", "Binder clip", "Bluetooth speaker",
     "Book", "Calculator", "Camera", "Coffee cup", "Cord", "Desk lamp", "Digital tablet", "Drone", "Earbuds",
@@ -38,7 +38,12 @@ ITEMS = [
     "Smart lightbulb", "Bike helmet", "Portable fan", "Guitar pick", "Measuring spoon", "TV remote", "Scented candle",
     "Desk organizer", "Stress ball", "Wireless keyboard", "Phone stand", "Resistance bands", "Fidget spinner",
     "Keychain", "Reusable straw", "Travel mug", "Paper towel roll", "Sticky notes", "Charger cable", "Umbrella",
-    "Shopping tote", "Shoe cleaner", "Lint roller", "Coaster", "Clip-on ring light"
+    "Shopping tote", "Shoe cleaner", "Lint roller", "Coaster", "Clip-on ring light",
+    # New additions:
+    "Bicycle", "Monitor", "Lamp", "Cat", "Dog", "Tissues", "Pills", "Mat", "Notebook holder", "Mug warmer",
+    "Gaming mouse", "Wireless charger", "Standing desk", "Laptop sleeve", "Portable speaker", "Drawing tablet",
+    "E-reader", "Wrist rest", "Neck pillow", "Hand cream", "Back massager", "Shower speaker", "Sleep mask",
+    "Pocket notebook", "Desk fan"
 ]
 
 # Function to recognize object using CLIP
@@ -103,25 +108,13 @@ if uploaded_file:
 
     # Get object label using CLIP
     object_label = get_object_label(uploaded_file)
-    st.write(f"🌀 The Oracle perceives... **{object_label}**")
 
-    # Ask user if the label is correct
-    is_correct = st.radio(f"Is this a **{object_label}**?", ["Yes", "No"])
-    if is_correct == "No":
-        object_label = st.text_input("What is this object instead?")
-
-    # Ask a quirky, mystical question
-    quirky_questions = [
-        f"How does your **{object_label}** guide you in times of uncertainty?",
-        f"What secret wisdom does your **{object_label}** whisper to you in moments of reflection?",
-        f"If your **{object_label}** had a spirit, what would it say about your journey?",
-        f"How does your **{object_label}** shape your fate?"
-    ]
-    user_response = st.text_input(quirky_questions[0])
+    # Ask a mystical, quirky question
+    user_response = st.text_input("How does this artifact guide your spirit?")
 
     if user_response:
-        with st.spinner("🌿 The Oracle is meditating on your essence... infusing wisdom and care into its vision... 🔮"):
-            time.sleep(5)  # Simulating a longer, mystical wait time
+        with st.spinner("🌿 The Oracle is infusing wisdom and care into its vision... 🔮"):
+            time.sleep(5)  # Longer wait to create a mystical vibe
             lunch_prophecy, food_keyword = get_lunch_prophecy(object_label, user_response)
 
         # Display mystical lunch prophecy
@@ -132,4 +125,3 @@ if uploaded_file:
         personalized_lunch_spots = find_personalized_lunch_spots(food_keyword)
         for spot in personalized_lunch_spots:
             st.write(f"🍴 {spot}")
-
