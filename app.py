@@ -1,6 +1,5 @@
 import streamlit as st
-import openai
-import os
+from openai import OpenAI
 import requests
 import torch
 import time
@@ -9,7 +8,7 @@ from PIL import Image
 import re
 
 # Load secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 
 # Load CLIP model
@@ -19,9 +18,8 @@ def load_clip_model():
 
 clip_model, clip_processor = load_clip_model()
 
-# List of 125 objects
+# List of everyday objects
 ITEMS = [
-    # (same object list as before—unchanged)
     "AirPods", "Backpack", "Badge", "Ballpoint pen", "Battery pack", "Belt", "Binder clip", "Bluetooth speaker",
     "Book", "Calculator", "Camera", "Coffee cup", "Cord", "Desk lamp", "Digital tablet", "Drone", "Earbuds",
     "Ethernet cable", "External hard drive", "Face mask", "Flash drive", "Flashlight", "Glasses", "Hand sanitizer",
@@ -41,7 +39,7 @@ ITEMS = [
     "Hand cream", "Back massager", "Shower speaker", "Sleep mask", "Pocket notebook", "Desk fan"
 ]
 
-# CLIP labeling
+# Use CLIP to label the image
 def get_object_label(image_file):
     try:
         image = Image.open(image_file).convert("RGB")
@@ -53,24 +51,27 @@ def get_object_label(image_file):
     except Exception as e:
         return f"Error using CLIP model: {e}"
 
-# ChatGPT lunch prophecy
+# Generate a lunch prophecy from OpenAI
 def get_lunch_prophecy(object_label, user_response):
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a mystical oracle that provides symbolic lunch suggestions based on a user's object and reflections."},
                 {"role": "user", "content": f"I presented an object: {object_label}. The seeker tells me: {user_response}. What should they eat for lunch? Highlight what they 'trust' in, find 'comfort' in, and 'value'. Then, provide a poetic, mystical prophecy. Finally, return a single word (e.g., 'salad', 'ramen', 'pasta') indicating the kind of food, but do not include it in the response."}
             ]
         )
-        oracle_response = response['choices'][0]['message']['content']
+        oracle_response = response.choices[0].message.content
+
+        # Try to extract a food keyword
         keyword_match = re.search(r"\b(salad|soup|sandwich|pizza|ramen|sushi|pasta|burger|tacos|burrito|noodles|rice|wrap|curry|steak|pancakes|smoothie|poke|bagel|falafel|dumplings|noodle|bbq|pho|dim sum|hotpot|teriyaki|laksa|bánh mì|pad thai|roti|shawarma)\b", oracle_response.lower())
         keyword = keyword_match.group(0) if keyword_match else "lunch"
+
         return oracle_response, keyword
     except Exception as e:
         return f"Error generating lunch prophecy: {e}", "lunch"
 
-# Google Places restaurant search
+# Use Google Places to find restaurants
 def find_personalized_lunch_spots(food_keyword):
     endpoint = "https://maps.googleapis.com/maps/api/place/textsearch/json"
     query = f"{food_keyword} restaurant near National Design Centre Singapore"
@@ -88,11 +89,11 @@ def find_personalized_lunch_spots(food_keyword):
     except Exception as e:
         return [f"Error fetching lunch spots: {e}"]
 
-# Streamlit UI
+# Streamlit app UI
 st.title("🔮 The Lunch Oracle")
 st.subheader("Reveal your lunch destiny by presenting an offering - a photo of an everyday item you use and love.")
 
-# Upload photo
+# Upload an image
 uploaded_file = st.file_uploader("📸 Upload a photo or take one with your camera.", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     st.image(uploaded_file, caption="Your sacred offering...", use_container_width=True)
